@@ -1,0 +1,39 @@
+---
+import Layout from "../../components/Layout.astro";
+import { getCollection } from "astro:content";
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects");
+  return projects.map((p) => ({ params: { slug: p.slug.split("/") }, props: { project: p } }));
+}
+
+const { project } = Astro.props;
+const { Content } = await project.render();
+
+function fmt(d) {
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
+}
+---
+<Layout title={`${project.data.title} • Zugarek`} description={project.data.summary}>
+  <article class="card prose">
+    <p class="muted" style="margin-top:0">
+      <strong>{fmt(project.data.date)}</strong>
+      {" • "}{project.data.category}
+      {project.data.github ? <>{" • "}<a href={project.data.github} target="_blank">GitHub</a></> : null}
+    </p>
+
+    <h1 style="margin-top:10px">{project.data.title}</h1>
+
+    {project.data.links?.length ? (
+      <p class="muted">
+        {project.data.links.map((l, idx) => (
+          <>
+            <a href={l.url} target="_blank">{l.label}</a>{idx < project.data.links.length - 1 ? " • " : ""}
+          </>
+        ))}
+      </p>
+    ) : null}
+
+    <Content />
+  </article>
+</Layout>

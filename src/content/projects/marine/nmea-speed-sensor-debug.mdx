@@ -1,0 +1,46 @@
+---
+title: "NMEA 2000 Speed Source Debug (Bench to Boat)"
+date: 2026-02-17
+category: marine
+tags: ["nmea2000", "simrad", "autopilot", "canbus", "gps", "troubleshooting"]
+summary: "Tracking down missing/unstable speed source data and making it reliable enough for autopilot + helm displays."
+github: "https://github.com/yourname/yourrepo"
+links:
+  - label: "NMEA 2000 overview"
+    url: "https://www.nmea.org/"
+  - label: "Simrad support"
+    url: "https://www.simrad-yachting.com/"
+---
+
+## Goal
+
+Get a **stable speed source** onto the network so:
+- Autopilot behaves correctly
+- Helm display has consistent data
+- No weird limp-mode behavior caused by missing inputs
+
+## Setup
+
+**Network:** NMEA 2000 backbone with proper termination, power tee, and drops.
+**Devices:** autopilot computer + heading sensor + GPS source + display.
+
+## Symptoms
+
+- Speed present intermittently
+- Some devices show speed, others don’t
+- Calibration screens claim missing sensor
+
+## Root cause (what actually happened)
+
+Write what you discovered here.
+
+## Fix
+
+- What you changed (wiring, config, firmware)
+- How you validated it (screens, PGNs observed, sea trial)
+
+## Lessons learned
+
+- Keep a known-good spare GPS puck for isolation testing
+- Treat backbone power + termination like “layer 1” of the system
+- Document PGNs and which device is the authoritative source

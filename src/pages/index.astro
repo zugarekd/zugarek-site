@@ -1,0 +1,38 @@
+---
+import Layout from "../components/Layout.astro";
+import { getCollection } from "astro:content";
+
+const projects = (await getCollection("projects"))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+function fmt(d) {
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
+}
+---
+<Layout title="Zugarek • Projects" description="Projects and notes: marine electronics, distributed systems, embedded builds, and finance tech.">
+  <section class="card hero">
+    <h1>Projects</h1>
+    <p>
+      A hybrid of lab notebook + professional portfolio: what I built, how I built it, what broke,
+      what I learned, and links to the code and sources.
+    </p>
+  </section>
+
+  <section class="grid">
+    {projects.map((p) => (
+      <a class="card tile" href={`/projects/${p.slug}/`}>
+        <div class="titleRow">
+          <div>
+            <div class="kicker">{fmt(p.data.date)} • {p.data.category}</div>
+            <h2>{p.data.title}</h2>
+          </div>
+          <span class="badge">Open</span>
+        </div>
+        <p class="summary">{p.data.summary}</p>
+        <div class="tags">
+          {p.data.tags.slice(0, 6).map((t) => <span class="tag">{t}</span>)}
+        </div>
+      </a>
+    ))}
+  </section>
+</Layout>

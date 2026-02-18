@@ -1,0 +1,38 @@
+---
+const { title = "Zugarek Projects", description = "Projects and notes from the lab." } = Astro.props;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link rel="stylesheet" href="/styles/global.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <div class="brand">
+          <div class="name">Daniel Zugarek</div>
+          <div class="tagline">Systems-minded builder • projects, lab notes, and lessons learned</div>
+        </div>
+        <nav class="nav">
+          <a href="/">Projects</a>
+          <a href="/labs">Labs</a>
+          <a href="/notes">Notes</a>
+          <a href="/about">About</a>
+        </nav>
+      </header>
+
+      <main>
+        <slot />
+      </main>
+
+      <footer class="footer">
+        <span>© {new Date().getFullYear()} Zugarek</span>
+        <span class="muted">Built with Astro • Published via GitHub Pages</span>
+      </footer>
+    </div>
+  </body>
+</html>

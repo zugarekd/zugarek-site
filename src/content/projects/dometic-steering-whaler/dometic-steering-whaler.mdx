@@ -28,27 +28,118 @@ Get a **stable speed source** onto the network so:
 
 ### ED1800 — Dometic Optimus EPS Color Display
 
-- Access dealer settings:
-  - Hold the **Menu** button for ~3 seconds
-  - Enter dealer code: `0906`
+The ED1800 is the primary helm display for the Dometic Optimus EPS steering system. It provides configuration access, steering diagnostics, autopilot integration, and real-time system status.
+
+For advanced configuration, dealer-level settings are required.
+
+---
+
+## 🔐 Accessing Dealer Settings
+
+To enter the dealer configuration menu:
+
+1. Hold the **Menu** button for approximately **3 seconds**
+2. Enter dealer code: `0906`
+
+This unlocks advanced setup options for steering calibration, display configuration, and system integration.
 
 ![Dealer Menu (Code 0906)](/projects/dometic-steering-whaler/PXL_20260218_015830041.jpg)
 
-### Display Configuration
+---
+
+## 🖥 Display Configuration
+
+The display setup screen allows customization of:
+
+- Units
+- Data fields
+- Layout preferences
+- System display behavior
+
+This is where helm information can be tailored to match the vessel layout and operator preference.
 
 ![Display Setup](/projects/dometic-steering-whaler/PXL_20260218_015928817.jpg)
 
-### Steering Configuration
+---
+
+## ⚙️ Steering Configuration
+
+Within dealer mode, the steering configuration menu provides access to:
+
+- Steering stops
+- Rudder limits
+- System calibration
+- EPS diagnostics
+
+This is critical when commissioning a new system or validating configuration during bench testing.
 
 ![Steering Setup](/projects/dometic-steering-whaler/PXL_20260218_015937001.jpg)
 
-### EA1000 Autopilot Integration
+---
+
+## 🧭 EA1000 Autopilot Integration
+
+The EA1000 autopilot module integrates directly with the Optimus EPS system and NMEA 2000 network.
+
+Once connected, heading, steering commands, and autopilot control are managed through the same network backbone.
 
 ![EA1000 Module](/projects/dometic-steering-whaler/PXL_20260218_020020217.jpg)
 
-### Helm + Display Layout
+---
+
+## 🛠 Helm + Display Layout
+
+Final helm layout with the ED1800 mounted alongside other navigation equipment.
+
+This configuration allows:
+
+- Steering status visibility
+- Autopilot engagement monitoring
+- Real-time engine and speed data (via NMEA 2000)
 
 ![Helm and Display](/projects/dometic-steering-whaler/PXL_20260218_020024351.jpg)
+
+### ESP32 Feeding Simulated NMEA 2000 Data
+
+To bench test my helm electronics without launching the boat, I built a small ESP32-based NMEA 2000 message generator. It simulates engine RPM, speed over water (STW/SOW), heading, and other data directly onto the CAN bus.
+
+The project is available here:
+
+👉 https://github.com/zugarekd/NMEA2000-Sender-Screen
+
+---
+
+## 🔧 ESP32 NMEA 2000 Sender (RPM Simulation)
+
+The ESP32 sends PGN 127488 (Engine Rapid Update) to simulate engine RPM and PGN 128259 for speed over water. This allows the helm display and autopilot system to behave as if the engine is idling on the water.
+
+![ESP32 NMEA2000 Sender](/projects/dometic-steering-whaler/ESP32_sender.jpg)
+
+---
+
+## 🛜 ESP32 CAN Bus Interface
+
+The ESP32 connects to the NMEA 2000 backbone via a CAN transceiver. The board acts as a full NMEA 2000 node, broadcasting structured PGNs on the bus.
+
+This allows full bench testing of:
+
+- RPM display
+- Speed over water
+- Heading
+- Autopilot idle detection logic
+- Steering stop calibration
+
+![ESP32 CAN Bus Wiring](/projects/dometic-steering-whaler/CAN.jpg)
+
+---
+
+## 🧭 Bench Testing on Simrad GO7
+
+With the system connected to a benched Simrad GO7, the display correctly shows simulated RPM and water speed data.
+
+This makes it possible to validate helm configuration and calibration entirely off the water.
+
+![Simrad GO7 Bench Test](/projects/dometic-steering-whaler/simrad.jpg)
 
 ## Symptoms
 

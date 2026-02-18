@@ -1,8 +1,8 @@
 ---
-title: "NMEA 2000 Speed Source Debug (Bench to Boat)"
+title: "Simrad, Dometic Steering, NMEA 2000 Bench Setup"
 date: 2026-02-17
 category: marine
-tags: ["nmea2000", "simrad", "autopilot", "canbus", "gps", "troubleshooting"]
+tags: ["nmea2000", "simrad", "autopilot", "canbus", "gps", "troubleshooting", "dometic", "ea1000"]
 summary: "Tracking down missing/unstable speed source data and making it reliable enough for autopilot + helm displays."
 github: "https://github.com/yourname/yourrepo"
 links:
@@ -18,11 +18,20 @@ Get a **stable speed source** onto the network so:
 - Autopilot behaves correctly
 - Helm display has consistent data
 - No weird limp-mode behavior caused by missing inputs
+- Boston Whaler 130 Super Sport with Simrad GO7 autopilot + Dometic EA1000 + Precision-9
 
 ## Setup
 
 **Network:** NMEA 2000 backbone with proper termination, power tee, and drops.
-**Devices:** autopilot computer + heading sensor + GPS source + display.
+
+**Devices:**
+ED1800 Dometic Optimus EPS Color Display
+- Dealer code: 0906 after holding down menu button for 3 seconds
+(/projects/dometic-steering-whaler/PXL_20260218_015830041.jpg)
+(/projects/dometic-steering-whaler/PXL_20260218_015928817.jpg)
+(/projects/dometic-steering-whaler/PXL_20260218_015937001.jpg)
+(/projects/dometic-steering-whaler/PXL_20260218_020020217.jpg)
+(/projects/dometic-steering-whaler/PXL_20260218_020024351.jpg)
 
 ## Symptoms
 

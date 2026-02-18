@@ -180,3 +180,12 @@ a:hover { text-decoration: underline; }
   border: 1px solid var(--border);
 }
 .prose pre code { padding: 0; background: transparent; }
+
+.prose img {
+  width: 100%;
+  max-width: 900px;
+  display: block;
+  margin: 18px auto;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}

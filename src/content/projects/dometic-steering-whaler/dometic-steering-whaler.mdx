@@ -1,77 +1,101 @@
 ---
-title: "Simrad, Dometic Steering, NMEA 2000 Bench Setup"
+title: "Simrad + Dometic EPS + NMEA 2000 Bench Setup"
 date: 2026-02-17
 category: marine
 tags: ["nmea2000", "simrad", "autopilot", "canbus", "gps", "troubleshooting", "dometic", "ea1000"]
-summary: "Installing Dometic EPS steering on a Whaler 130SS."
-github: "https://github.com/yourname/yourrepo"
+summary: "Bench testing and commissioning Dometic Optimus EPS steering with Simrad GO7 and NMEA 2000 simulation on a Boston Whaler 130SS."
+github: "https://github.com/zugarekd/NMEA2000-Sender-Screen"
 links:
-  - label: "NMEA 2000 overview"
-    url: "https://www.nmea.org/"
-  - label: "Simrad support"
-    url: "https://www.simrad-yachting.com/"
+  - label: "NMEA 2000 Overview"
+url: "https://www.nmea.org/"
+  - label: "Simrad Support"
+url: "https://www.simrad-yachting.com/"
 ---
 
-## Goal
+## Overview
 
-Get a **stable speed source** onto the network so:
-- Autopilot behaves correctly
-- Helm display has consistent data
-- No weird limp-mode behavior caused by missing inputs
-- Boston Whaler 130 Super Sport with Simrad GO7 autopilot + Dometic EA1000 + Precision-9
+This project documents the bench setup and commissioning process for a **Boston Whaler 130 Super Sport** equipped with:
 
-## Setup
+- **Simrad GO7**
+- **Dometic Optimus EPS steering**
+- **EA1000 autopilot module**
+- **Precision-9 heading sensor**
+- Full **NMEA 2000 backbone**
 
-**Network:** NMEA 2000 backbone with proper termination, power tee, and drops.
-
-## Devices
-
-### ED1800 — Dometic Optimus EPS Color Display
-
-The ED1800 is the primary helm display for the Dometic Optimus EPS steering system. It provides configuration access, steering diagnostics, autopilot integration, and real-time system status.
-
-For advanced configuration, dealer-level settings are required.
+The goal was to create a stable, predictable network environment before launching — including simulating engine RPM and water speed to validate autopilot and steering behavior.
 
 ---
 
-## 🔐 Accessing Dealer Settings
+## 🎯 Goal
 
-To enter the dealer configuration menu:
+Establish a **stable speed and RPM source** on the NMEA 2000 network so that:
 
-1. Hold the **Menu** button for approximately **3 seconds**
+- The autopilot behaves correctly
+- The helm display shows consistent data
+- Steering calibration can be completed
+- Limp-mode or fault conditions caused by missing data are eliminated
+
+---
+
+## Network Architecture
+
+A standard NMEA 2000 backbone was used with:
+
+- Proper termination (120Ω at both ends)
+- Dedicated power tee
+- Individual drop cables per device
+- Verified backbone voltage and resistance
+
+Treat backbone power and termination as **Layer 1** — if this isn’t correct, nothing else will behave predictably.
+
+---
+
+# Devices & Configuration
+
+---
+
+## ED1800 — Dometic Optimus EPS Display
+
+The **ED1800** is the primary helm display for the Optimus EPS system. It provides:
+
+- Steering configuration
+- Rudder limit setup
+- System diagnostics
+- Autopilot integration status
+- Real-time network data
+
+### 🔐 Accessing Dealer Settings
+
+To enter advanced configuration:
+
+1. Hold the **Menu** button for ~3 seconds
 2. Enter dealer code: `0906`
 
-This unlocks advanced setup options for steering calibration, display configuration, and system integration.
-
-![Dealer Menu (Code 0906)](/projects/dometic-steering-whaler/PXL_20260218_015830041.jpg)
+![Dealer Menu](/projects/dometic-steering-whaler/PXL_20260218_015830041.jpg)
 
 ---
 
-## 🖥 Display Configuration
+### 🖥 Display Configuration
 
-The display setup screen allows customization of:
+The display configuration screen controls:
 
 - Units
-- Data fields
-- Layout preferences
-- System display behavior
-
-This is where helm information can be tailored to match the vessel layout and operator preference.
+- Layout
+- Displayed data fields
+- Behavior settings
 
 ![Display Setup](/projects/dometic-steering-whaler/PXL_20260218_015928817.jpg)
 
 ---
 
-## ⚙️ Steering Configuration
+### ⚙️ Steering Configuration
 
-Within dealer mode, the steering configuration menu provides access to:
+Dealer mode exposes:
 
-- Steering stops
+- Steering stop calibration
 - Rudder limits
-- System calibration
-- EPS diagnostics
-
-This is critical when commissioning a new system or validating configuration during bench testing.
+- EPS system diagnostics
+- Commissioning tools
 
 ![Steering Setup](/projects/dometic-steering-whaler/PXL_20260218_015937001.jpg)
 
@@ -79,84 +103,112 @@ This is critical when commissioning a new system or validating configuration dur
 
 ## 🧭 EA1000 Autopilot Integration
 
-The EA1000 autopilot module integrates directly with the Optimus EPS system and NMEA 2000 network.
+The **EA1000** integrates directly with the Optimus EPS and the NMEA 2000 backbone.
 
-Once connected, heading, steering commands, and autopilot control are managed through the same network backbone.
+Once configured, it consumes:
+
+- Heading data (Precision-9)
+- Speed input
+- Engine RPM
+- Rudder feedback
 
 ![EA1000 Module](/projects/dometic-steering-whaler/PXL_20260218_020020217.jpg)
 
 ---
 
-## 🛠 Helm + Display Layout
+## 🛠 Helm Layout
 
-Final helm layout with the ED1800 mounted alongside other navigation equipment.
+Final helm layout with ED1800, Simrad GO7, and steering system installed.
 
-This configuration allows:
+![Helm Layout](/projects/dometic-steering-whaler/PXL_20260218_020024351.jpg)
 
-- Steering status visibility
-- Autopilot engagement monitoring
-- Real-time engine and speed data (via NMEA 2000)
+---
 
-![Helm and Display](/projects/dometic-steering-whaler/PXL_20260218_020024351.jpg)
+# ESP32 NMEA 2000 Simulator
 
-### ESP32 Feeding Simulated NMEA 2000 Data
+To avoid repeatedly launching the boat for testing, I built an ESP32-based NMEA 2000 message generator.
 
-To bench test my helm electronics without launching the boat, I built a small ESP32-based NMEA 2000 message generator. It simulates engine RPM, speed over water (STW/SOW), heading, and other data directly onto the CAN bus.
-
-The project is available here:
+Repository:
 
 👉 https://github.com/zugarekd/NMEA2000-Sender-Screen
 
 ---
 
-## 🔧 ESP32 NMEA 2000 Sender (RPM Simulation)
+## 🔧 What It Simulates
 
-The ESP32 sends PGN 127488 (Engine Rapid Update) to simulate engine RPM and PGN 128259 for speed over water. This allows the helm display and autopilot system to behave as if the engine is idling on the water.
+The ESP32 broadcasts:
 
-![ESP32 NMEA2000 Sender](/projects/dometic-steering-whaler/ESP32_sender.jpg)
+- **PGN 127488** — Engine Rapid Update (RPM)
+- **PGN 128259** — Speed Through Water (STW/SOW)
+- Heading and other optional test data
 
----
+This allows:
 
-## 🛜 ESP32 CAN Bus Interface
-
-The ESP32 connects to the NMEA 2000 backbone via a CAN transceiver. The board acts as a full NMEA 2000 node, broadcasting structured PGNs on the bus.
-
-This allows full bench testing of:
-
-- RPM display
-- Speed over water
-- Heading
-- Autopilot idle detection logic
 - Steering stop calibration
+- Autopilot idle detection validation
+- RPM display verification
+- Network troubleshooting without the engine running
 
-![ESP32 CAN Bus Wiring](/projects/dometic-steering-whaler/CAN.jpg)
+![ESP32 Sender](/projects/dometic-steering-whaler/ESP32_sender.jpg)
 
 ---
 
-## 🧭 Bench Testing on Simrad GO7
+## 🛜 CAN Bus Interface
 
-With the system connected to a benched Simrad GO7, the display correctly shows simulated RPM and water speed data.
+The ESP32 connects via a CAN transceiver to the NMEA 2000 backbone and acts as a fully compliant node.
 
-This makes it possible to validate helm configuration and calibration entirely off the water.
+![CAN Wiring](/projects/dometic-steering-whaler/CAN.jpg)
 
-![Simrad GO7 Bench Test](/projects/dometic-steering-whaler/simrad.jpg)
+---
 
-## Symptoms
+## 🧭 Bench Validation on Simrad GO7
 
-- Limp mode on bench setup
+With the ESP32 connected, the Simrad GO7 correctly displayed:
 
-## Root cause (what actually happened)
--CAN 3 RPM data needed
+- Simulated RPM
+- Simulated speed over water
+- Network status
 
-Write what you discovered here.
+![Simrad Bench Test](/projects/dometic-steering-whaler/simrad.jpg)
+
+This confirmed the network and display stack were functioning before sea trial.
+
+---
+
+# Troubleshooting Notes
+
+## Symptom
+
+- Limp mode during bench setup
+- Steering system refusing calibration
+
+## Root Cause
+
+RPM data was required on the appropriate CAN channel (CAN 3) for the system to recognize the engine as “running” at idle.
+
+Without valid RPM input, the system treated the setup as incomplete.
 
 ## Fix
 
-- What you changed (wiring, config, firmware)
-- How you validated it (screens, PGNs observed, sea trial)
+- Ensured correct RPM PGN broadcast
+- Verified source address
+- Confirmed reception on network
+- Validated via display diagnostics
 
-## Lessons learned
+---
 
-- Keep a known-good spare GPS puck for isolation testing
-- Treat backbone power + termination like “layer 1” of the system
-- Document PGNs and which device is the authoritative source
+# Lessons Learned
+
+- Always keep a known-good spare GPS puck for isolation testing
+- Backbone power + termination = foundation of everything
+- Know which device is authoritative for each PGN
+- Simulating data can dramatically accelerate commissioning
+- Bench validation prevents on-water surprises
+
+---
+
+## Closing Thoughts
+
+Modern marine electronics are networked systems. Treat them like distributed software stacks — isolate variables, validate inputs, and control your test environment.
+
+The ESP32 simulator turned what could have been multiple launch/debug cycles into a controlled lab exercise.

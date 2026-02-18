@@ -1,0 +1,128 @@
+---
+title: "Go + LaserShark: Lunar Defender (Vector Arcade Clone)"
+date: 2025-12-17
+category: embedded
+tags: ["go", "lasershark", "vector-display", "arcade", "embedded", "real-time"]
+summary: "Recreating a Lunar Defender-style vector arcade game in Go using the LaserShark DAC for real-time analog vector output."
+github: "https://github.com/zugarekd/go-lasershark-lunar-defender"
+links:
+  - label: "GitHub Repository"
+url: "https://github.com/zugarekd/go-lasershark-lunar-defender"
+  - label: "YouTube Demo"
+url: "https://www.youtube.com/watch?v=PzrYLswsNHE"
+---
+
+## Goal
+
+Build a **vector-based arcade game** in Go that drives a LaserShark DAC for real-time analog output, emulating classic vector-display gameplay similar to early Lunar Defender / Asteroids-era machines.
+
+The objective was to:
+
+- Drive X/Y vector signals directly from Go
+- Maintain deterministic frame timing
+- Render crisp line geometry
+- Keep the architecture clean and extensible
+
+This project was less about game mechanics and more about revisiting real-time hardware-driven rendering fundamentals.
+
+---
+
+## Why Vector Rendering?
+
+Most modern rendering pipelines assume raster displays.
+
+Vector displays are different:
+
+- You draw lines directly — no pixels
+- Order of drawing affects brightness
+- Dwell time affects intensity
+- Timing precision matters
+
+Driving analog vector hardware forces you to think about geometry, signal timing, and performance in ways modern GPUs abstract away.
+
+---
+
+## Architecture
+
+High-level flow:
+
+Game Loop
+→ Physics Update
+→ Geometry Generation
+→ Coordinate Normalization
+→ LaserShark DAC Output
+
+
+Key engineering considerations:
+
+- Maintaining stable frame timing
+- Preventing visible flicker
+- Avoiding DAC saturation
+- Managing line brightness through dwell timing
+
+The system treats rendering as deterministic geometry output rather than buffered frame rendering.
+
+---
+
+## Rendering Model
+
+Unlike raster graphics:
+
+- A list of line segments is constructed each frame
+- Coordinates are normalized to DAC voltage range
+- Lines are streamed sequentially
+- Brightness is effectively proportional to dwell time
+
+There is no framebuffer — only ordered vector output.
+
+This makes the system:
+
+- Predictable
+- Low latency
+- Hardware-aware
+
+But also unforgiving if timing drifts.
+
+---
+
+## Project Demo
+
+Below is the project running on hardware, with the LaserShark DAC driving a vector display:
+
+<iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/PzrYLswsNHE"
+    title="Go LaserShark Lunar Defender Demo"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen
+></iframe>
+
+---
+
+## Lessons Learned
+
+- Vector rendering requires thinking in *geometry*, not pixels.
+- Go is perfectly capable of deterministic real-time loops when structured carefully.
+- Hardware output exposes architectural weaknesses quickly.
+- Keeping rendering stateless simplifies debugging.
+
+Most importantly, building for hardware forces discipline in timing and system design.
+
+---
+
+## What I’d Improve
+
+- Configurable difficulty scaling
+- Replay capture + deterministic playback
+- Improved clipping and boundary handling
+- Dynamic beam intensity modulation
+
+---
+
+## Final Thoughts
+
+This project was a reminder that simple systems often create the most interesting engineering constraints.
+
+Driving analog vector hardware directly from Go felt closer to early arcade engineering than modern graphics development — and that was exactly the point.

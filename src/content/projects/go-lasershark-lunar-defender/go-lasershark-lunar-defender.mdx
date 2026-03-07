@@ -98,31 +98,3 @@ Below is the project running on hardware, with the LaserShark DAC driving a vect
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     allowfullscreen
 ></iframe>
-
----
-
-## Lessons Learned
-
-- Vector rendering requires thinking in *geometry*, not pixels.
-- Go is perfectly capable of deterministic real-time loops when structured carefully.
-- Hardware output exposes architectural weaknesses quickly.
-- Keeping rendering stateless simplifies debugging.
-
-Most importantly, building for hardware forces discipline in timing and system design.
-
----
-
-## What I’d Improve
-
-- Configurable difficulty scaling
-- Replay capture + deterministic playback
-- Improved clipping and boundary handling
-- Dynamic beam intensity modulation
-
----
-
-## Final Thoughts
-
-This project was a reminder that simple systems often create the most interesting engineering constraints.
-
-Driving analog vector hardware directly from Go felt closer to early arcade engineering than modern graphics development — and that was exactly the point.

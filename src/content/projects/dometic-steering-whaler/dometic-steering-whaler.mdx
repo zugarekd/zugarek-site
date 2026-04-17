@@ -36,7 +36,7 @@ The goal was to create a stable, predictable network environment before launchin
 
 ---
 
-## 🎯 Goal
+## Goal
 
 Establish a **stable speed and RPM source** on the NMEA 2000 network so that:
 
@@ -53,8 +53,8 @@ This installation runs four separate CAN-based networks:
 
 - **NMEA 2000 backbone** — shared bus carrying Simrad GO7, Simrad autopilot computer, Precision-9 compass, and the Mercury VesselView gateway
 - **Dometic CAN 1** — dedicated network between the helm and the EPS steering system; fairly isolated and not bridged to the NMEA 2000 backbone
-- **Dometic CAN 2** — the EA1000 autopilot module connects to the NMEA 2000 backbone here, consuming heading, speed, and RPM data to drive the EPS steering pump
-- **Dometic CAN 3 (steering network)** — internal bus between the EA1000 and the EPS pump/actuator; this is also tied back into the NMEA 2000 backbone to close the loop between the steering system and the chartplotter
+- **Dometic CAN 2** — the EA1000 autopilot module connects to the NMEA 2000 backbone here, consuming heading, speed, and RPM data to drive the EPS electric actuator
+- **Dometic CAN 3 (steering network)** — internal bus between the EA1000 and the EPS electric actuator; this is also tied back into the NMEA 2000 backbone to close the loop between the steering system and the chartplotter
 
 The NMEA 2000 backbone was built with:
 
@@ -67,7 +67,7 @@ Treat backbone power and termination as **Layer 1** — if this isn’t correct,
 
 ---
 
-# Devices & Configuration
+## Devices & Configuration
 
 ---
 
@@ -81,7 +81,7 @@ The **ED1800** is the primary helm display for the Optimus EPS system. It provid
 - Autopilot integration status
 - Real-time network data
 
-### 🔐 Accessing Dealer Settings
+### Accessing Dealer Settings
 
 > **Critical:** Without the dealer code you cannot complete steering stop calibration, rudder limit setup, or autopilot commissioning. This is the single most important step — the system cannot be properly configured through the standard user menu alone.
 
@@ -94,7 +94,7 @@ To enter advanced configuration:
 
 ---
 
-### 🖥 Display Configuration
+### Display Configuration
 
 The display configuration screen controls:
 
@@ -107,7 +107,7 @@ The display configuration screen controls:
 
 ---
 
-### ⚙️ Steering Configuration
+### Steering Configuration
 
 Dealer mode exposes:
 
@@ -140,7 +140,7 @@ This was the production source of RPM data on the water, replacing the ESP32 sim
 
 ---
 
-## 🧭 EA1000 Autopilot Integration
+## EA1000 Autopilot Integration
 
 The **EA1000** integrates directly with the Optimus EPS and the NMEA 2000 backbone via its CAN 2 port.
 
@@ -166,7 +166,7 @@ Mounting under the seat moves the sensor far enough from the helm electronics to
 
 ---
 
-## 🛠 Helm Layout
+## Helm Layout
 
 Final helm layout with ED1800, Simrad GO7, and steering system installed.
 
@@ -174,17 +174,15 @@ Final helm layout with ED1800, Simrad GO7, and steering system installed.
 
 ---
 
-# ESP32 NMEA 2000 Simulator
+## ESP32 NMEA 2000 Simulator
 
 To avoid repeatedly launching the boat for testing, I built an ESP32-based NMEA 2000 message generator.
 
-Repository:
-
-👉 https://github.com/zugarekd/NMEA2000-Sender-Screen
+Repository: https://github.com/zugarekd/NMEA2000-Sender-Screen
 
 ---
 
-## 🔧 What It Simulates
+## What It Simulates
 
 The ESP32 broadcasts:
 
@@ -211,7 +209,7 @@ The ESP32 connects via a CAN transceiver to the NMEA 2000 backbone and acts as a
 
 ---
 
-## 🧭 Bench Validation on Simrad GO7
+## Bench Validation on Simrad GO7
 
 With the ESP32 connected, the Simrad GO7 correctly displayed:
 
@@ -242,6 +240,8 @@ During initial fitment and testing, the wire loom was temporarily secured to all
 ![Temporary Wire Loom Routing](/projects/dometic-steering-whaler/ea1000_wiring.jpg)
 
 After shimming and clearancing, the system cycled smoothly through full travel and trim.
+
+---
 
 ## Helm Mounting Bracket Fabrication
 

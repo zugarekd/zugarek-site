@@ -49,7 +49,13 @@ Establish a **stable speed and RPM source** on the NMEA 2000 network so that:
 
 ## Network Architecture
 
-A standard NMEA 2000 backbone was used with:
+This installation runs three separate CAN-based networks that are bridged together:
+
+- **NMEA 2000 backbone** — shared bus carrying Simrad GO7, Simrad autopilot computer, Precision-9 compass, and the Mercury VesselView gateway
+- **Dometic CAN 2** — the EA1000 autopilot module connects to the NMEA 2000 backbone here, consuming heading, speed, and RPM data to drive the EPS steering pump
+- **Dometic CAN 3 (steering network)** — internal bus between the EA1000 and the EPS pump/actuator; this is also tied back into the NMEA 2000 backbone to close the loop between the steering system and the chartplotter
+
+The NMEA 2000 backbone was built with:
 
 - Proper termination (120Ω at both ends)
 - Dedicated power tee
@@ -76,10 +82,12 @@ The **ED1800** is the primary helm display for the Optimus EPS system. It provid
 
 ### 🔐 Accessing Dealer Settings
 
+> **Critical:** Without the dealer code you cannot complete steering stop calibration, rudder limit setup, or autopilot commissioning. This is the single most important step — the system cannot be properly configured through the standard user menu alone.
+
 To enter advanced configuration:
 
 1. Hold the **Menu** button for ~3 seconds
-2. Enter dealer code: `0906`
+2. Enter dealer code: **`0906`**
 
 ![Dealer Menu](/projects/dometic-steering-whaler/PXL_20260218_015830041.jpg)
 
@@ -111,18 +119,49 @@ Dealer mode exposes:
 
 ---
 
+## Simrad Autopilot Computer
+
+The **Simrad autopilot computer** (AP unit) bridges the Simrad GO7 to the NMEA 2000 backbone. This is required for the autopilot to function — the GO7 alone does not drive the steering; it sends commands through the autopilot computer, which translates them into NMEA 2000 messages consumed by the EA1000 on the Dometic CAN 2 bus.
+
+Without this unit on the network, the EA1000 has no source of autopilot commands and the heading hold / nav steer modes are unavailable.
+
+---
+
+## Mercury VesselView Bridge
+
+The **Mercury VesselView gateway** connects the Mercury engine's proprietary CAN bus to the NMEA 2000 backbone. This allows the engine to publish:
+
+- RPM (PGN 127488)
+- Engine hours
+- Coolant temp and other engine diagnostics
+
+This was the production source of RPM data on the water, replacing the ESP32 simulator used during bench testing. With the VesselView gateway on the network, the EA1000 receives real engine RPM which is required for correct autopilot idle detection and speed-based steering gain.
+
+---
+
 ## 🧭 EA1000 Autopilot Integration
 
-The **EA1000** integrates directly with the Optimus EPS and the NMEA 2000 backbone.
+The **EA1000** integrates directly with the Optimus EPS and the NMEA 2000 backbone via its CAN 2 port.
+
+> **Gotcha:** The Dometic CAN 2 network is self-powered — it draws power internally from the EA1000/EPS system and does not require a dedicated power drop on that segment. Adding one is unnecessary and could cause issues. Only the main NMEA 2000 backbone needs its own power tee.
 
 Once configured, it consumes:
 
 - Heading data (Precision-9)
 - Speed input
-- Engine RPM
+- Engine RPM (from VesselView gateway)
 - Rudder feedback
+- Autopilot commands (from Simrad autopilot computer)
 
 ![EA1000 Module](/projects/dometic-steering-whaler/PXL_20260218_020020217.jpg)
+
+---
+
+## Precision-9 Compass Placement
+
+The **Precision-9** heading sensor was mounted **under the seat** rather than at the helm. The helm area contains significant magnetic interference sources: the helm controls, wiring runs, and mounting hardware all create a magnetic environment that will cause the compass to report incorrect headings.
+
+Mounting under the seat moves the sensor far enough from the helm electronics to get a clean, stable heading signal. The Precision-9 connects to the NMEA 2000 backbone via its own drop cable from that location.
 
 ---
 

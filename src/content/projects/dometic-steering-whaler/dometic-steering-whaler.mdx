@@ -49,9 +49,10 @@ Establish a **stable speed and RPM source** on the NMEA 2000 network so that:
 
 ## Network Architecture
 
-This installation runs three separate CAN-based networks that are bridged together:
+This installation runs four separate CAN-based networks:
 
 - **NMEA 2000 backbone** — shared bus carrying Simrad GO7, Simrad autopilot computer, Precision-9 compass, and the Mercury VesselView gateway
+- **Dometic CAN 1** — dedicated network between the helm and the EPS steering system; fairly isolated and not bridged to the NMEA 2000 backbone
 - **Dometic CAN 2** — the EA1000 autopilot module connects to the NMEA 2000 backbone here, consuming heading, speed, and RPM data to drive the EPS steering pump
 - **Dometic CAN 3 (steering network)** — internal bus between the EA1000 and the EPS pump/actuator; this is also tied back into the NMEA 2000 backbone to close the loop between the steering system and the chartplotter
 

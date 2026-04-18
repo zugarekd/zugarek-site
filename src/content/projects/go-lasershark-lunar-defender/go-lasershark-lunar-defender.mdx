@@ -3,98 +3,124 @@ title: "Go + LaserShark: Lunar Defender (Vector Arcade Clone)"
 date: 2025-12-17
 category: embedded
 tags: ["go", "lasershark", "vector-display", "arcade", "embedded", "real-time"]
-summary: "Recreating a Lunar Defender-style vector arcade game in Go using the LaserShark DAC for real-time analog vector output."
+summary: "Recreating a Lunar Defender-style vector arcade game in Go using the LaserShark DAC for real-time analog vector output to galvanometer-driven laser hardware."
 github: "https://github.com/zugarekd/go-lasershark-lunar-defender"
 links:
-  - label: "GitHub Repository"
-    url: "https://github.com/zugarekd/go-lasershark-lunar-defender"
   - label: "YouTube Demo"
     url: "https://www.youtube.com/watch?v=PzrYLswsNHE"
+  - label: "LaserShark Hardware"
+    url: "https://macpod.net/electronics/lasershark/lasershark.php"
 ---
 
 ## Goal
 
-Build a **vector-based arcade game** in Go that drives a LaserShark DAC for real-time analog output, emulating classic vector-display gameplay similar to early Lunar Defender / Asteroids-era machines.
+Build a **vector-based arcade game** in Go that drives a LaserShark DAC for real-time analog output to a galvanometer laser projector, emulating classic vector-display gameplay in the style of Lunar Defender and Asteroids-era machines.
 
 The objective was to:
 
-- Drive X/Y vector signals directly from Go
-- Maintain deterministic frame timing
-- Render crisp line geometry
-- Keep the architecture clean and extensible
+- Drive X/Y vector signals directly from Go to physical laser hardware
+- Maintain deterministic frame timing at the sample rate of the DAC
+- Render crisp line geometry with correct dwell and blanking behavior
+- Keep the architecture simple: Go process piped directly into the LaserShark host application
 
-This project was less about game mechanics and more about revisiting real-time hardware-driven rendering fundamentals.
+This project was less about game mechanics and more about revisiting real-time hardware-driven rendering at the signal level.
+
+---
+
+## LaserShark Hardware
+
+The [LaserShark](https://macpod.net/electronics/lasershark/lasershark.php) is an open-source USB laser DAC (Showcard) by Macpod LLC, designed to drive galvanometer-based laser projectors. It fills the role that soundcard DACs previously played in the laser hobbyist community — but as a dedicated, purpose-built USB device.
+
+**Specifications (v2.0):**
+
+- ILDA-standard differential **±10V 12-bit X and Y output**
+- 2 × 0–5V single-ended **12-bit analog/TTL laser channels** (A and B)
+- 1 × 5V single-ended TTL laser channel (C)
+- Up to **64Kpps** (64,000 points per second) at full resolution
+- LPC1343 microcontroller running at 72MHz
+- USB bulk transfer interface
+- 50mm × 80mm board, open-source hardware and firmware (GPL v2)
+
+The board connects to galvanometers — precision mirror motors that steer the laser beam in X and Y — and to the laser's modulation input for blanking (turning the beam on and off between line segments).
 
 ---
 
 ## Why Vector Rendering?
 
-Most modern rendering pipelines assume raster displays.
+Most modern rendering pipelines assume raster displays — a fixed grid of pixels refreshed at a fixed rate.
 
-Vector displays are different:
+Vector displays work differently:
 
-- You draw lines directly — no pixels
-- Order of drawing affects brightness
-- Dwell time affects intensity
-- Timing precision matters
+- You draw lines directly by steering the beam — no pixels, no framebuffer
+- The order you draw segments affects perceived brightness
+- Dwell time at each point controls intensity
+- Beam blanking between segments prevents visible travel artifacts
+- Timing precision matters at the microsecond level
 
-Driving analog vector hardware forces you to think about geometry, signal timing, and performance in ways modern GPUs abstract away.
+Driving analog vector hardware forces you to think about geometry, signal timing, and throughput in ways modern GPUs completely abstract away. If your timing drifts, you see it immediately as flicker or distortion on the hardware.
 
 ---
 
 ## Architecture
 
-High-level flow:
+The interface between Go and the LaserShark hardware is a Unix pipe. The Go game process writes vector commands to stdout, which are piped directly into `lasershark_stdin.exe` — the LaserShark host application that translates those commands into USB bulk transfers to the DAC.
 
+```
+go run lunar.go | lasershark_stdin.exe
+```
+
+High-level data flow:
+
+```
 Game Loop
-→ Physics Update
-→ Geometry Generation
-→ Coordinate Normalization
-→ LaserShark DAC Output
-
+  → Physics Update
+  → Geometry Generation (line segments)
+  → Coordinate Normalization (game units → 12-bit DAC range)
+  → Blanking / Dwell annotation
+  → stdout (lasershark_stdin command format)
+  → lasershark_stdin → USB → LaserShark DAC → Galvos + Laser
+```
 
 Key engineering considerations:
 
-- Maintaining stable frame timing
-- Preventing visible flicker
-- Avoiding DAC saturation
-- Managing line brightness through dwell timing
+- Frame timing must be stable — the DAC is streaming, not buffered in any meaningful way
+- Blanking (laser off) must be inserted between non-contiguous segments
+- DAC saturation must be avoided — coordinates must stay within the normalized 12-bit range
+- Dwell points control line brightness; longer dwell = brighter
 
-The system treats rendering as deterministic geometry output rather than buffered frame rendering.
+The system treats rendering as a deterministic, ordered stream of point commands rather than a rendered frame.
 
 ---
 
 ## Rendering Model
 
-Unlike raster graphics:
+Each frame, the game produces an ordered list of line segments. These are converted into a sequence of DAC sample points:
 
-- A list of line segments is constructed each frame
-- Coordinates are normalized to DAC voltage range
-- Lines are streamed sequentially
-- Brightness is effectively proportional to dwell time
+- Game coordinates are normalized to the 12-bit DAC output range (mapping to the LaserShark's ±10V ILDA differential X/Y outputs)
+- Between non-contiguous segments, a blanking command is emitted (laser off, beam moved to next start point)
+- Dwell time — the number of repeated samples at a point — controls perceived brightness
+- The entire sequence is written to stdout each frame for `lasershark_stdin` to consume
 
-There is no framebuffer — only ordered vector output.
+There is no framebuffer. There is no display driver. The laser is the display, driven entirely by the ordering and timing of the point stream.
 
 This makes the system:
 
-- Predictable
-- Low latency
-- Hardware-aware
-
-But also unforgiving if timing drifts.
+- Low latency — output is immediate
+- Hardware-aware — rendering decisions directly affect the physical output
+- Unforgiving — timing errors, missed blanks, or coordinate overflow are immediately visible
 
 ---
 
 ## Project Demo
 
-Below is the project running on hardware, with the LaserShark DAC driving a vector display:
+Below is the project running on hardware, with the LaserShark DAC driving a galvanometer laser projector:
 
 <iframe
     width="560"
     height="315"
     src="https://www.youtube.com/embed/PzrYLswsNHE"
     title="Go LaserShark Lunar Defender Demo"
-    frameborder="0"
+    frameBorder="0"
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowfullscreen
+    allowFullScreen
 ></iframe>

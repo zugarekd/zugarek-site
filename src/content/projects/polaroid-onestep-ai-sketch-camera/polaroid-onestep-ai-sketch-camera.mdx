@@ -1,0 +1,224 @@
+---
+title: "Polaroid OneStep AI Sketch Camera"
+date: 2026-11-13
+category: embedded
+tags: ["esp32-s3", "esp32-cam", "ov3660", "thermal-printer", "openai", "arduino", "polaroid", "camera"]
+summary: "A vintage Polaroid OneStep gutted and rebuilt around an ESP32-S3-CAM and a thermal printer: press the shutter and it prints the photo, then an AI-generated stick-figure sketch of the scene."
+github: "https://github.com/zugarekd/Polaroid"
+links:
+  - label: "Design Spec"
+    url: "https://github.com/zugarekd/Polaroid/blob/main/docs/superpowers/specs/2026-09-22-esp32-s3-cam-capture-page-design.md"
+  - label: "ESP32 Camera Reference"
+    url: "https://github.com/espressif/esp32-camera"
+---
+
+## Overview
+
+A Polaroid OneStep Land Camera with the film mechanism removed and a modern guts transplant: an **ESP32-S3-CAM** where the lens used to be, and a **58mm thermal printer** where the film pack used to go.
+
+Press the original shutter button and the camera:
+
+1. Captures a photo and prints it right away
+2. Sends the photo to OpenAI to be described
+3. Generates a black-and-white stick-figure sketch from that description
+4. Prints the sketch below the photo
+
+Instant film, minus the film.
+
+---
+
+## Goal
+
+Keep the object looking and feeling like a Polaroid while replacing everything inside it. The objectives were:
+
+- Capture and print a photo with a single button press, with no phone or laptop involved
+- Print the original photo immediately so the paper is moving during the AI wait, instead of staring at a dead camera for 10-30 seconds
+- Fit the camera, printer, and wiring inside the original body
+- Keep the firmware in a single Arduino sketch
+
+---
+
+## How It Works
+
+The whole pipeline runs sequentially on the ESP32 in one sketch. Ordering matters more than parallelism here: the board is single-threaded, so the trick is to print the photo *before* starting the slow network calls.
+
+```
+Shutter press (GPIO38, debounced)
+  → Capture JPEG from OV3660
+  → Decode → grayscale → resize to 384px → Floyd-Steinberg dither → 1-bit
+  → Print photo
+  → Base64 the JPEG → OpenAI vision model → text description
+  → Description → OpenAI image model → black-and-white stick-figure PNG
+  → Decode → grayscale → resize → dither → 1-bit
+  → Print sketch
+```
+
+- **Describe:** the JPEG is base64-encoded and sent to the OpenAI chat completions API (`gpt-4o-mini` with vision input, prompt "describe image")
+- **Sketch:** the description goes to the OpenAI Images API (`gpt-image-2.5-flare`, 1024x1024) with the prompt "create black and white image using stick figure like drawing" followed by the description
+- **Print:** thermal printers are 1-bit, so both images are decoded to 8-bit grayscale, resized to the printer's 384-dot width, dithered, packed, and sent as a bitmap
+
+If any step fails, the camera prints a short error line on the printer itself, since there is no screen to show it on. A busy flag ignores extra shutter presses while a run is in progress.
+
+---
+
+## Hardware
+
+- **ESP32-S3-CAM** board (ESP32-S3-WROOM-1 N16R8: 16MB flash, 8MB PSRAM) with an **OV3660** camera module. The driver auto-detects OV2640 vs OV3660, so the code is the same for either.
+- **EM5822H** 58mm thermal printer (5-9V, USB / Bluetooth / TTL / RS232 interfaces). It needs its own supply and cannot run from the ESP32.
+- A panel-mount pushbutton for the shutter
+- The Polaroid OneStep body
+
+### Wiring
+
+| Part | Connection |
+|---|---|
+| Printer RX | ESP32 GPIO14 |
+| Printer TX | Not connected |
+| Printer GND | ESP32 GND (shared ground required) |
+| Printer power | Separate 5-9V supply |
+| Shutter button | GPIO38 to GND (internal pull-up, no resistor) |
+
+Printer TX is intentionally left unwired. The ESP32 GPIOs are not 5V-tolerant and the printer's TX output voltage was unconfirmed, so the printer is send-only. The cost is no paper-out or status feedback.
+
+The camera uses the Espressif ESP32-S3-EYE pin mapping, which matched the board's silkscreen.
+
+---
+
+## Build Log
+
+### Bench Prototype
+
+Before touching the Polaroid, everything was proven on the bench. The ESP32-S3-CAM sits on a breakout board with the OV3660 camera on its ribbon cable. The first milestone was a web page with a "Take Picture" button that returned a JPEG from the camera.
+
+ESP32-S3-CAM on a Freenove breakout board with the OV3660 camera module attached.
+
+![ESP32-S3-CAM Bench Setup](/projects/polaroid-onestep-ai-sketch-camera/board-bare.jpg)
+
+The printer was wired up on the bench next to it. This is the thermal printer with its paper slot and tear bar, with the TTL and power leads running off to the board.
+
+![Thermal Printer on the Bench](/projects/polaroid-onestep-ai-sketch-camera/printer-bench.jpg)
+
+---
+
+### Gutting the Body
+
+With the electronics working, it was time to see how much of the OneStep could be removed. The film mechanism came out, along with everything else that only existed to eject and develop film.
+
+Interior of the camera body with the film mechanism removed and an opening cut through the bottom.
+
+![Camera Body Gutted](/projects/polaroid-onestep-ai-sketch-camera/body-gutted.jpg)
+
+Test-fitting the printer against the body to see how it would sit.
+
+![Printer Test Fit](/projects/polaroid-onestep-ai-sketch-camera/printer-test-fit.jpg)
+
+---
+
+### Camera and Shutter in the Front Plate
+
+The front plate carries the lens barrel, shutter button, and viewfinder window, so it is the part that makes it look like a Polaroid. The OV3660 module is stuck with double-sided tape in the lens opening, with its ribbon cable running back into the body. A pushbutton is mounted on the plate for the shutter.
+
+Inside of the front plate showing the camera module in the lens opening and the pushbutton.
+
+![Front Plate Interior](/projects/polaroid-onestep-ai-sketch-camera/front-plate-inside.jpg)
+
+---
+
+### First Prints
+
+Before everything was packed into the body, the chain was run with the printer sitting in the shell and the ESP32 boards wired loosely alongside it.
+
+Printer in the rear shell with the ESP32 board and breakout board wired up next to it.
+
+![Bench Wiring](/projects/polaroid-onestep-ai-sketch-camera/bench-wiring.jpg)
+
+An early full run: the dithered photo on top and the stick-figure sketch below it. The sketch is the model's interpretation of the description, so details drift from the real scene, but the composition carries over.
+
+![First Print](/projects/polaroid-onestep-ai-sketch-camera/first-print.jpg)
+
+---
+
+### Fitting the Printer
+
+The empty rear shell, with masking tape still on it from the cutting and trimming.
+
+![Empty Rear Shell](/projects/polaroid-onestep-ai-sketch-camera/shell-empty.jpg)
+
+The printer seated in the shell.
+
+![Printer Seated in the Shell](/projects/polaroid-onestep-ai-sketch-camera/printer-seated.jpg)
+
+The printer's label: model EM5822H, 5-9V, with USB, Bluetooth, TTL, and RS232 interfaces. Only the TTL port is used.
+
+![Printer Label](/projects/polaroid-onestep-ai-sketch-camera/printer-label.jpg)
+
+---
+
+### Wiring and Power
+
+The printer's connector panel. Two wires go to the power port on the left and five to the TTL port. Of the TTL pins, only RX is actually driven by the ESP32.
+
+![Printer Ports](/projects/polaroid-onestep-ai-sketch-camera/printer-ports.jpg)
+
+A small USB-C power board with red and black leads, hanging inside the shell before being fixed in place.
+
+![USB-C Board](/projects/polaroid-onestep-ai-sketch-camera/usb-c-board.jpg)
+
+A panel-mount pushbutton installed in the rear shell, with its leads running to the electronics.
+
+![Button Wiring](/projects/polaroid-onestep-ai-sketch-camera/button-wiring.jpg)
+
+---
+
+### Finished
+
+Everything fits behind the original shell. A USB-C cable plugs into the back, and a pushbutton sits on the rear shell.
+
+![Rear View](/projects/polaroid-onestep-ai-sketch-camera/rear-view.jpg)
+
+From the front it still looks like a Polaroid OneStep, with the rainbow stripe, shutter button, viewfinder, and the "Polaroid Land Camera" film door. The only giveaway is the tiny camera lens sitting deep in the lens barrel.
+
+![Finished Camera, Front](/projects/polaroid-onestep-ai-sketch-camera/finished-front.jpg)
+
+![Camera in Hand](/projects/polaroid-onestep-ai-sketch-camera/in-hand.jpg)
+
+---
+
+## Web Interface
+
+The board also serves a small web page on port 80, which was the original bench prototype and is still handy for testing. It has Take Picture, Describe & Sketch, Print Photo, and Print Sketch buttons, and shows the captured photo and the generated sketch.
+
+![Web Interface on a Phone](/projects/polaroid-onestep-ai-sketch-camera/web-ui.jpg)
+
+| Endpoint | Description |
+|---|---|
+| `GET /` | The web page |
+| `GET /capture` | Takes a photo and returns the JPEG |
+| `GET /analyze` | Describes the last photo, generates a sketch, returns the PNG |
+| `GET /print-photo` | Prints the last photo |
+| `GET /print-sketch` | Prints the last generated sketch |
+
+---
+
+## Problems Encountered
+
+- **PNG width limit.** The PNGdec library's default scanline buffer only covers 320px-wide images, but the generated sketches are 1024px. The buffer sizes a struct compiled into the library itself, so a `#define` in the sketch cannot safely override it. The fix is a local patch to `PNG_MAX_BUFFERED_PIXELS` in the installed library.
+- **Image API changes.** The original design called for DALL-E 3 and a separate download step for the returned image URL. The current Images API returns base64 PNG data directly, which removed the download step and its second TLS connection.
+- **Printer baud rate.** The spec assumed 19200 baud, a common default for this printer family. The working sketch runs at 9600.
+- **No printer feedback.** Leaving printer TX unwired avoided a 5V signal into a non-5V-tolerant GPIO, but means the camera cannot tell when the paper runs out.
+
+---
+
+## Known Limitations
+
+- TLS uses `setInsecure()`: encrypted, but certificates are not validated
+- No authentication on the web page, so anyone on the network can trigger captures and API calls
+- No retry or backoff on API failures
+- 58mm paper only, with no print density tuning
+- The camera is unresponsive for the 10-30 seconds an AI run takes
+
+---
+
+## Source
+
+Code, wiring notes, and the original design spec are in the [Polaroid repository](https://github.com/zugarekd/Polaroid). Wi-Fi and API credentials are placeholders at the top of the sketch and need to be filled in locally before flashing.

@@ -9,6 +9,7 @@ const { title = "Zugarek Projects", description = "Projects and notes from the l
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <title>{title}</title>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6948554932756503" crossorigin="anonymous"></script>
   </head>
   <body>
     <div class="container">
@@ -28,6 +29,16 @@ const { title = "Zugarek Projects", description = "Projects and notes from the l
       <main>
         <slot />
       </main>
+
+      <div class="ad-slot card">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-6948554932756503"
+             data-ad-slot="0000000000"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      </div>
 
       <footer class="footer">
         <span>© {new Date().getFullYear()} Zugarek</span>
